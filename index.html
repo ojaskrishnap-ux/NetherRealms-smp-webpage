@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chills.net • NetherRealms</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#090011;color:#fff;font-family:system-ui}
+
+:root{
+  --bg:#090011;
+  --panel:#160020;
+  --accent:#d946ff;
+  --accent-soft:#9b4dff;
+  --danger:#7a0000;
+  --queue:#b37a00;
+  --ok:#2ecc71;
+}
+
+/* TOP BAR */
+#topbar{
+  height:56px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 16px;
+  background:linear-gradient(90deg,#120018,#24002e);
+}
+#topbar button{
+  background:var(--accent);
+  border:none;
+  padding:8px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+/* LOGO */
+.logo{
+  font-size:26px;
+  font-weight:900;
+  color:#ff79ff;
+  text-shadow:0 0 20px #ff2cff;
+  animation:glow 2s infinite alternate;
+}
+@keyframes glow{from{opacity:.7}to{opacity:1}}
+
+/* LAYOUT */
+.app{display:flex;height:calc(100% - 56px)}
+#sidebar{
+  width:230px;
+  background:#120018;
+  padding:12px;
+  display:none;
+  flex-direction:column;
+  gap:10px;
+}
+#main{flex:1;padding:20px}
+
+/* AUTH */
+#auth{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.card{
+  background:var(--panel);
+  padding:28px;
+  border-radius:18px;
+  width:320px;
+  text-align:center;
+}
+input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border-radius:10px;
+  border:none;
+}
+button.primary{
+  width:100%;
+  padding:12px;
+  background:var(--accent);
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+}
+.link{color:#caa3ff;cursor:pointer;margin-top:10px}
+
+/* DASHBOARD */
+#dashboard{display:none}
+.server-slots{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:20px;
+}
+.slot{
+  background:#1b0026;
+  border-radius:16px;
+  padding:20px;
+  text-align:center;
+  cursor:pointer;
+}
+.slot:hover{outline:2px solid var(--accent)}
+
+/* SERVER PANEL */
+#serverPanel{display:none}
+.status{
+  padding:10px;
+  border-radius:10px;
+  margin:10px 0;
+}
+.offline{background:var(--danger)}
+.queue{background:var(--queue)}
+.online{background:var(--ok)}
+.start-btn{
+  padding:14px;
+  background:var(--accent);
+  border:none;
+  border-radius:14px;
+  animation:pulse 1.5s infinite;
+}
+@keyframes pulse{0%{box-shadow:0 0 0}100%{box-shadow:0 0 20px var(--accent)}}
+
+/* SIDEBAR ITEMS */
+.side{
+  padding:12px;
+  border-radius:12px;
+  background:#1a0024;
+  cursor:pointer;
+}
+
+/* CONSOLE */
+.console{background:#000;padding:12px;border-radius:12px}
+.console input{background:#111;color:#0f0}
+
+/* MOBILE */
+@media(max-width:700px){
+  #sidebar{position:absolute;height:100%;z-index:10}
+}
+</style>
+</head>
+
+<body>
+
+<div id="topbar">
+  <div class="logo">NetherRealms</div>
+  <button onclick="goDashboard()">Dashboard</button>
+</div>
+
+<div class="app">
+  <div id="sidebar"></div>
+  <div id="main">
+
+    <!-- AUTH -->
+    <div id="auth">
+      <div class="card">
+        <h2 id="authTitle">Sign In</h2>
+        <input id="user" placeholder="Username">
+        <input id="pass" type="password" placeholder="Password">
+        <button class="primary" onclick="authAction()">Continue</button>
+        <div class="link" onclick="toggleAuth()">Switch to Sign Up</div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard">
+      <h2>Your Servers</h2>
+      <div class="server-slots" id="slots"></div>
+    </div>
+
+    <!-- SERVER -->
+    <div id="serverPanel">
+      <h2 id="serverTitle"></h2>
+      <div id="serverStatus" class="status offline">Offline</div>
+      <button class="start-btn" onclick="startServer()">Start</button>
+
+      <p>
+        Address:
+        <button onclick="copyIP()">NetherRealms.aternos.me:23109</button>
+      </p>
+
+      <h3>Console</h3>
+      <div class="console">
+        <input id="cmd" placeholder="/op Steve" onkeydown="if(event.key==='Enter')sendCmd()">
+      </div>
+
+      <h3>Players</h3>
+      <button onclick="playerAction('op')">OP</button>
+      <button onclick="playerAction('ban')">Ban</button>
+      <button onclick="playerAction('heal')">Heal</button>
+      <button onclick="playerAction('kill')">Kill</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let servers=JSON.parse(localStorage.getItem("servers")||"[]");
+let active=null;
+let signup=false;
+
+/* AUTH */
+function toggleAuth(){
+  signup=!signup;
+  authTitle.textContent=signup?"Sign Up":"Sign In";
+}
+function authAction(){
+  if(!user.value||!pass.value)return alert("Fill all fields");
+  localStorage.setItem("user",user.value);
+  auth.style.display="none";
+  dashboard.style.display="block";
+  sidebar.style.display="flex";
+  renderDashboardSidebar();
+  renderSlots();
+}
+
+/* DASHBOARD */
+function renderSlots(){
+  slots.innerHTML="";
+  for(let i=0;i<3;i++){
+    let d=document.createElement("div");
+    d.className="slot";
+    if(servers[i]){
+      d.textContent=servers[i].name;
+      d.onclick=()=>openServer(i);
+    }else{
+      d.textContent="Create Server";
+      d.onclick=createServer;
+    }
+    slots.appendChild(d);
+  }
+}
+function createServer(){
+  if(servers.length>=3)return alert("Server limit reached");
+  let s={name:"Server "+(servers.length+1),status:"offline"};
+  servers.push(s);
+  localStorage.setItem("servers",JSON.stringify(servers));
+  webhook("CREATE_SERVER",s);
+  renderSlots();
+}
+
+/* SERVER */
+function openServer(i){
+  active=i;
+  dashboard.style.display="none";
+  serverPanel.style.display="block";
+  renderServerSidebar();
+  serverTitle.textContent="Welcome to "+localStorage.getItem("user")+"'s server";
+  updateStatus();
+}
+function updateStatus(){
+  serverStatus.className="status "+servers[active].status;
+  serverStatus.textContent=servers[active].status.toUpperCase();
+}
+function startServer(){
+  servers[active].status="queue";
+  localStorage.setItem("servers",JSON.stringify(servers));
+  updateStatus();
+  webhook("START_REQUEST",servers[active]);
+}
+function copyIP(){
+  navigator.clipboard.writeText("NetherRealms.aternos.me:23109");
+}
+
+/* SIDEBAR */
+function renderDashboardSidebar(){
+  sidebar.innerHTML="";
+  let d=document.createElement("div");
+  d.className="side";
+  d.textContent="Your Servers";
+  sidebar.appendChild(d);
+}
+function renderServerSidebar(){
+  sidebar.innerHTML="";
+  ["Server","Options","Software","Files","Players","Console"].forEach(t=>{
+    let d=document.createElement("div");
+    d.className="side";
+    d.textContent=t;
+    sidebar.appendChild(d);
+  });
+}
+
+/* NAV */
+function goDashboard(){
+  auth.style.display="none";
+  serverPanel.style.display="none";
+  dashboard.style.display="block";
+  sidebar.style.display="flex";
+  renderDashboardSidebar();
+  renderSlots();
+}
+
+/* ACTIONS */
+function sendCmd(){
+  if(!cmd.value)return;
+  webhook("COMMAND",{command:cmd.value});
+  cmd.value="";
+}
+function playerAction(a){
+  webhook("PLAYER_"+a.toUpperCase(),servers[active]);
+}
+
+/* WEBHOOK */
+function webhook(type,data){
+  fetch("https://discord.com/api/webhooks/1471541153273741322/CSXVNBsCQvW8WBgqD5luH7nEY58AdHWBAGWKVV7USkA4ubs2l20QozXkJljVF2mhaw53",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      type,
+      user:localStorage.getItem("user"),
+      data,
+      time:new Date().toISOString()
+    })
+  }).catch(()=>{});
+}
+</script>
+
+</body>
+</html>
