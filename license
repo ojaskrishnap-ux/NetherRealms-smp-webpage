@@ -1,0 +1,38 @@
+## license
+
+Chills Panel License
+Version 1.0
+
+Copyright (c) 2026 Chills
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to use,
+modify, and run the Software for personal or private server management use,
+subject to the following conditions:
+
+1. You MAY:
+   - Use the Software for personal Minecraft servers
+   - Modify the frontend for private use
+   - Integrate your own webhook or backend logic
+
+2. You MAY NOT:
+   - Sell or sublicense the Software
+   - Rebrand and redistribute as a paid product
+   - Claim the original UI/UX design as your own
+   - Use the Software for malicious, deceptive, or illegal purposes
+
+3. NO WARRANTY:
+   The Software is provided "AS IS", without warranty of any kind, express or
+   implied, including but not limited to the warranties of merchantability,
+   fitness for a particular purpose, and noninfringement.
+
+4. LIMITATION OF LIABILITY:
+   In no event shall the authors or copyright holders be liable for any claim,
+   damages, or other liability arising from the use of the Software.
+
+---
+
+Chills Panel is a frontend interface only.
+All real server control actions must be handled responsibly by the user.
+
+NetherRealms UI Design © Chills
